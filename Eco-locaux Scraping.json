@@ -1,0 +1,222 @@
+{
+  "name": "Eco-locaux Scraping",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "1dd85f75-1728-4fa3-8f32-9e3155638744",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -976,
+        80
+      ],
+      "id": "3b9c010e-0a39-44da-b2cd-b34b3a77c628",
+      "name": "Webhook",
+      "webhookId": "1dd85f75-1728-4fa3-8f32-9e3155638744"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": " X-Goog-Api-Key",
+              "value": "AIzaSyAVHpVRi6Yl397oieaTIIghNO6ZuMnhYlQ"
+            },
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.formattedAddress,places.nationalPhoneNumber"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"textQuery\": \"boulangerie OR pressing Paris\",\n  \"languageCode\": \"fr\",\n  \"maxResultCount\": 20,\n  \"locationBias\": {\n    \"circle\": {\n      \"center\": {\n        \"latitude\": 48.8566,\n        \"longitude\": 2.3522\n      },\n      \"radius\": 15000\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -720,
+        80
+      ],
+      "id": "d4a79a70-3d86-4844-858d-e9ff283e49f4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "nom",
+              "field2": "Noms des Commerces"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.compareDatasets",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        48
+      ],
+      "id": "d7587c22-b46b-4a60-b78d-649107cd6207",
+      "name": "Compare Datasets"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Commerces",
+        "filterType": "none"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        224
+      ],
+      "id": "dcea8f14-4f77-45e4-acc8-d1949fb0752d",
+      "name": "Get many rows",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "Commerces",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Nom du commerce",
+              "fieldValue": "={{ $json.nom }}"
+            },
+            {
+              "fieldId": "Adresse",
+              "fieldValue": "={{ $json.adresse }}"
+            },
+            {
+              "fieldId": "Numéro de téléphone",
+              "fieldValue": "={{ $json.telephone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f03bd0fe-665c-4d75-b716-3892bc614de2",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.first().json.places.map(place => ({\n  json: {\n    nom: place.displayName?.text || \"\",\n    adresse: place.formattedAddress || \"\",\n    telephone: place.nationalPhoneNumber || \"\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        80
+      ],
+      "id": "3a8018b3-5fac-4474-8fce-318f4f00bf34",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Compare Datasets": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1fe44796-fe44-4d0f-8d91-e57979c57768",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9cb4ac6e6eaad1a7f01eac7a5711885fdbbf1c11ab1c44dd1c94cd5f6f69cdea"
+  },
+  "nodeGroups": [],
+  "id": "nY45ARk7ahSiPeTm",
+  "tags": [
+    {
+      "updatedAt": "2026-07-03T09:29:38.008Z",
+      "createdAt": "2026-07-03T09:29:38.008Z",
+      "id": "IuZuwgVyHJ7TjitX",
+      "name": "scraping"
+    }
+  ]
+}

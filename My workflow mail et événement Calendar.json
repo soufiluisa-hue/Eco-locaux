@@ -1,0 +1,389 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1536,
+        80
+      ],
+      "id": "8fe0a037-cc82-4b7b-86aa-12e0e596723b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Commerces",
+        "limit": 10,
+        "orderBy": "id",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "prospecte",
+              "condition": "eq",
+              "keyValue": "false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        80
+      ],
+      "id": "3052cc44-f12e-4da5-b117-1be3fa76fe06",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"onboarding@resend.dev\",\n  \"to\": [\"{{ $json.Email }}\"],\n  \"subject\": \"Decouvrez nos solutions eco locales\",\n  \"html\": \"<p>Bonjour,</p><p>Nous accompagnons les acteurs locaux dans leur demarche eco-responsable...</p>\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -912,
+        16
+      ],
+      "id": "c8a58e87-2772-4b1b-bfb1-c5f343f941fe",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "lBdtymVVaiBxfyFg",
+          "name": "Header Auth account 40"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "Prospection",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Id_commerce",
+              "fieldValue": "={{ $('Get many rows').item.json.id }}"
+            },
+            {
+              "fieldId": "Email envoyé",
+              "fieldValue": "={{ $('Get many rows').item.json.Email }}"
+            },
+            {
+              "fieldId": "Date d'envoi",
+              "fieldValue": "={{ $('Get many rows').item.json.Email && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test($('Get many rows').item.json.Email) ? $now.toISO() : null }}"
+            },
+            {
+              "fieldId": "Statut mail",
+              "fieldValue": "={{ $('Get many rows').item.json.Email ? 'En attente' : null }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        80
+      ],
+      "id": "547b6577-e52e-4821-84c0-f6f06e657db4",
+      "name": "Create a row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "soufiluisa@gmail.com",
+          "mode": "list",
+          "cachedResultName": "soufiluisa@gmail.com"
+        },
+        "start": "={{ $now.startOf('day').plus(Math.floor($itemIndex / 4), 'days').plus(9, 'hours').plus(($itemIndex % 4) * 45, 'minutes') }}",
+        "end": "={{ $now.startOf('day').plus(Math.floor($itemIndex / 4), 'days').plus(9, 'hours').plus((($itemIndex % 4) * 45) + 45, 'minutes') }}",
+        "useDefaultReminders": false,
+        "additionalFields": {
+          "description": "=Commerce : {{ $('Get many rows').item.json['Nom du commerce'] }} Téléphone : {{ $('Get many rows').item.json['Numéro de téléphone'] }} Email : {{ $('Get many rows').item.json['Email'] }} Adresse : {{ $('Get many rows').item.json['Adresse'] }}",
+          "summary": "=RDV prospection - {{ $('Get many rows').item.json['Nom du commerce'] }}"
+        },
+        "remindersUi": {
+          "remindersValues": []
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        128
+      ],
+      "id": "d87081a8-d25d-4b41-a43d-e5f17b646f3e",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "u8JfusGInjAyVfvh",
+          "name": "Google Calendar OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "66307609-9efe-42a3-816b-ad7326dc0b5d",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1136,
+        80
+      ],
+      "id": "38cab8d6-9877-4fad-851e-da717996a9e7",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Commerces",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.Id_commerce }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "prospecte",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        80
+      ],
+      "id": "eda69539-f15d-4a21-8f1a-7859dbdf6dea",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ec2ae37f-3272-4355-b5e2-57fb205cf324",
+              "leftValue": "={{$json.Email  }}",
+              "operator": {
+                "operation": "notEmpty",
+                "singleValue": true,
+                "type": "string"
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "047432fb-f28a-49c9-bb5b-67c70a3f997f",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        64
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6a158747-212b-49ed-a29b-d370db859e56",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "af303176-cc3f-4cfd-ab19-6a26c020646e",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9cb4ac6e6eaad1a7f01eac7a5711885fdbbf1c11ab1c44dd1c94cd5f6f69cdea"
+  },
+  "nodeGroups": [],
+  "id": "LZ382w7bhgRxhFsh",
+  "tags": []
+}

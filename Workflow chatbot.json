@@ -1,0 +1,372 @@
+{
+  "name": "My workflow 351",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "eab9bef2-aed7-492b-a82a-cc3334ed3201",
+      "name": "When chat message received",
+      "webhookId": "573e8ae6-8ae4-4e07-9e13-38077dd57556"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es l'assistant commercial de Sébastien Morel. Il t'interroge quotidiennement sur l'état de la prospection, à partir de trois tables Supabase : \"Commerces\", \"Prospection\" et \"Devis\".\n\n## TES MISSIONS\n\n### 1. Répondre aux questions du commercial\n- S'il demande les commerces à prospecter : interroge la table \"Commerces\", filtre sur la colonne \"prospecte\" = false, et ne remonte que le nom du commerce et le numéro de téléphone (jamais l'email ni l'adresse, sauf si explicitement demandé).\n- S'il demande l'état d'un devis ou d'une prospection : interroge la table concernée et donne une réponse courte et directe (pas de tableau sauf si plusieurs résultats).\n\n### 2. Mettre à jour la table \"Prospection\"\n- Quand le commercial confirme un rendez-vous (ex: \"RDV confirmé pour [nom du commerce]\", \"ok pour [nom]\") : mets à jour la colonne \"RDV confirmé\" pour la ligne correspondante.\n- **Pour mettre à jour \"Prospection\"** : le filtre utilise l'identifiant numérique \"Id_commerce\", pas le nom. Avant toute mise à jour dans \"Prospection\", cherche d'abord cet identifiant via l'outil de lecture sur \"Commerces\", filtré par le nom du commerce mentionné par le commercial. Utilise ensuite cet id numérique récupéré pour effectuer la mise à jour.\n- Le statut de distribution du mail (\"Statut mail\" : Distribué / Non distribué) n'est pas encore disponible automatiquement — si le commercial te demande de le renseigner, dis-lui que cette information sera ajoutée dans une prochaine version du système, et ne mets rien à jour toi-même sur ce champ pour l'instant.\n\n### 3. Mettre à jour la table \"Devis\"\n- Quand le commercial te donne un nouveau statut (ex: \"le devis de [nom] est envoyé/accepté/signé/refusé\") : mets à jour la colonne \"Statut du devis\" avec exactement une de ces quatre valeurs : brouillon, envoyé, accepté, refusé.\n- Quand le commercial te donne un commentaire (ex: \"note pour [nom] : ...\"), remplace entièrement le contenu de la colonne \"Commentaire\" par ce nouveau texte (n'ajoute pas à l'ancien, remplace-le).\n\n### 4. Gérer la conservation des données (RGPD) dans \"Commerces\" et \"Prospection\"\nAprès un appel téléphonique, le commercial t'indiquera si le commerce autorise la conservation de ses données ou souhaite une suppression. Deux cas possibles :\n- **Suppression immédiate** (ex: \"[nom] ne veut plus être recontacté, supprime ses données\", \"suppression immédiate pour [nom]\") : renseigne la colonne \"Date suppression prévue\" avec la date du jour, à la fois dans \"Commerces\" et dans \"Prospection\" pour ce commerce.\n- **Conservation autorisée** (ex: \"[nom] accepte d'être recontacté\", \"on peut garder ses données\") : renseigne la colonne \"Date suppression prévue\" avec la date du jour plus 6 mois, à la fois dans \"Commerces\" et dans \"Prospection\" pour ce commerce.\n- Utilise le même principe d'identification que pour la mission 2 : cherche d'abord l'id du commerce via \"Commerces\" avant de mettre à jour \"Prospection\".\n\n## RÈGLES IMPORTANTES\n- **Identification de la ligne à modifier** : identifie toujours le commerce concerné par son nom. Si le nom donné par le commercial correspond à plusieurs commerces, ou à aucun avec certitude, NE FAIS AUCUNE modification et demande-lui de préciser (par exemple avec l'adresse ou le numéro de téléphone).\n- **Jamais d'invention** : si une information n'existe pas dans la base, dis-le clairement (\"Je n'ai pas cette information\") plutôt que de deviner ou d'inventer une valeur.\n- **Confirmation avant écriture sensible** : avant de modifier \"Statut du devis\", de remplacer un \"Commentaire\", ou de renseigner une \"Date suppression prévue\", récapitule en une phrase ce que tu vas faire et demande une confirmation implicite (sauf si la demande du commercial est déjà sans ambiguïté).\n- **Ton** : réponses courtes, professionnelles, sans jargon technique. Le commercial n'a pas besoin de savoir que tu utilises Supabase ou des requêtes SQL."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1d79f694-69c3-4c79-84ba-0372829e78d2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        240
+      ],
+      "id": "c5e1efc7-b3b7-48c2-926d-19f7d08194da",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "3q77AFRIYBuicKjF",
+          "name": "OpenAI account 8"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        240
+      ],
+      "id": "7e3b34b5-c0e1-434c-9de8-064842afaba7",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Commerces",
+        "returnAll": true,
+        "filterType": "none"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        336,
+        192
+      ],
+      "id": "4c977030-ea53-42e4-b2e5-d6f20cdcf6d2",
+      "name": "Get many rows in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Devis"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        416,
+        320
+      ],
+      "id": "3afe9beb-0db7-4dbd-b9f1-850ddaf7f818",
+      "name": "Get many rows in Supabase1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Prospection"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        656,
+        128
+      ],
+      "id": "363f42c9-ce00-4368-972e-476ed0f79b7b",
+      "name": "Get many rows in Supabase2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Devis",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nom_commerce_temp",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('nom_commerce', 'Le nom du commerce mentionné par le commercial', 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Statut devis",
+              "fieldValue": "={{ $fromAI('Statut_devis', 'Le nouveau statut du devis à enregistrer : envoyé, accepté, signé ou refusé, déterminé à partir de ce que dit le commercial', 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        544,
+        144
+      ],
+      "id": "6738c8e1-f289-434a-8821-127f5fad0ee5",
+      "name": "Update a row in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Prospection",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nom_commerce_temp",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('nom_commerce_temp', 'L\\'identifiant du commerce mentionné par le commercial', 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "RDV confirmé",
+              "fieldValue": "={{ $fromAI('RDV_confirme', 'true si le commercial confirme le rendez-vous (dit oui, confirmé, ok...), false s\\'il annule ou dit non', 'boolean') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        528,
+        400
+      ],
+      "id": "a66d4932-759e-478c-a529-7a9545644ace",
+      "name": "Update a row in Supabase1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Commerces",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Nom du commerce",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('nom_commerce', 'Le nom du commerce mentionné par le commercial', 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Suppression immediate",
+              "fieldValue": "={{ $fromAI('suppression_immediate', 'true si le commercial demande une suppression immediate, false sinon', 'boolean') }}"
+            },
+            {
+              "fieldId": "Date suppression prevue",
+              "fieldValue": "={{ $fromAI('date_suppression', 'La date de suppression prevue au format YYYY-MM-DD : la date du jour si suppression immediate, ou la date du jour plus 6 mois si conservation autorisee', 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        624,
+        400
+      ],
+      "id": "ac5de6d8-4c75-4827-96fc-5c6c4182e8dd",
+      "name": "Update a row in Supabase2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fi0wGk2ZOO9vDmi6",
+          "name": "Supabase account 58"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Update a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row in Supabase1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row in Supabase2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "ef9abd78-c8c6-4d04-bcdd-61954678ba38",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9cb4ac6e6eaad1a7f01eac7a5711885fdbbf1c11ab1c44dd1c94cd5f6f69cdea"
+  },
+  "nodeGroups": [],
+  "id": "EleVK61x5gXe9lfy",
+  "tags": []
+}
