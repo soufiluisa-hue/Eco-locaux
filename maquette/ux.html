@@ -1,0 +1,506 @@
+<title>Éco-Locaux Dossier UX</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a long-form UX dossier — sticky chapter index on wide screens, one reading column with wide figures (journey, flows, wireframes) that scroll sideways inside themselves. */
+:root {
+  --bg: #eef3ef; --surface: #ffffff; --sunk: #e4ebe6; --ink: #13241c; --muted: #5a6c63; --line: #d5dfd8;
+  --accent: #1d6f47; --accent-ink: #ffffff; --accent-soft: #dcefe3;
+  --info: #2c5d97; --info-soft: #e0eaf6; --warn: #9a6512; --warn-soft: #f7ecd6; --bad: #ad3b2a; --bad-soft: #f7e1dc;
+  --wf: #9aa8a0; --wf-fill: #edf1ee; --wf-ink: #4c5a53;
+  --f-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --f-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1612; --surface: #15201a; --sunk: #1b2821; --ink: #e5eee8; --muted: #93a69c; --line: #26362d;
+    --accent: #52c58e; --accent-ink: #0a1610; --accent-soft: #1a3428;
+    --info: #86b2ea; --info-soft: #1a2a3d; --warn: #e2b05a; --warn-soft: #33281a; --bad: #ec8572; --bad-soft: #3a211c;
+    --wf: #50605a; --wf-fill: #1d2a24; --wf-ink: #a7b8af; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1612; --surface: #15201a; --sunk: #1b2821; --ink: #e5eee8; --muted: #93a69c; --line: #26362d;
+  --accent: #52c58e; --accent-ink: #0a1610; --accent-soft: #1a3428;
+  --info: #86b2ea; --info-soft: #1a2a3d; --warn: #e2b05a; --warn-soft: #33281a; --bad: #ec8572; --bad-soft: #3a211c;
+  --wf: #50605a; --wf-fill: #1d2a24; --wf-ink: #a7b8af; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.08rem; }
+p, ul, ol { margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .74rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; }
+
+.page { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 48px; max-width: 1240px; margin: 0 auto;
+  padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.toc { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); align-self: start; display: grid; gap: 4px; font-size: .9rem; }
+.toc a { color: var(--muted); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid var(--line); }
+.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+.toc .eyebrow { margin-bottom: 8px; }
+.toc .phase { margin-top: 12px; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 600; }
+article { display: grid; gap: 64px; min-width: 0; }
+section { display: grid; gap: 22px; min-width: 0; scroll-margin-top: 20px; }
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 64ch; }
+.prose { max-width: 66ch; display: grid; gap: 12px; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head .eyebrow { color: var(--accent); }
+
+.hero { display: grid; gap: 16px; }
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.phases div { padding: 14px 16px; display: grid; gap: 2px; }
+.phases div + div { border-left: 1px solid var(--line); }
+.phases b { font-family: var(--f-display); font-size: 1.05rem; }
+.phases span { font-size: .86rem; color: var(--muted); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; min-width: 0; }
+.scroll { overflow-x: auto; }
+
+/* persona */
+.persona { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 28px; }
+.who { display: grid; gap: 12px; align-content: start; }
+.avatar { width: 88px; height: 88px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-family: var(--f-display); font-size: 2rem; font-weight: 700; }
+.who dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: .9rem; }
+.who dt { color: var(--muted); }
+.who dd { margin: 0; }
+.quote { font-family: var(--f-display); font-size: 1.25rem; line-height: 1.35; font-weight: 500; border-left: 3px solid var(--accent); padding-left: 16px; }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.cols3 h3 { font-size: .95rem; margin-bottom: 8px; }
+.cols3 ul { padding-left: 18px; display: grid; gap: 5px; font-size: .92rem; }
+.meter { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 12px; align-items: center; font-size: .86rem; }
+.meter i { display: block; height: 6px; border-radius: 3px; background: var(--sunk); position: relative; }
+.meter i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: 3px; background: var(--accent); }
+
+/* journey */
+.journey { min-width: 980px; display: grid; grid-template-columns: 150px repeat(6, minmax(0, 1fr)); font-size: .86rem; }
+.journey > div { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.journey .rh { font-weight: 600; color: var(--muted); font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; }
+.journey .st { font-family: var(--f-display); font-weight: 700; font-size: .98rem; }
+.journey .st small { display: block; font-family: var(--f-data); font-weight: 400; font-size: .72rem; color: var(--muted); }
+.journey .tp { font-family: var(--f-data); font-size: .75rem; color: var(--info); }
+.journey .pain { color: var(--bad); }
+.journey .opp { color: var(--accent); }
+.journey .emo { grid-column: 2 / -1; padding: 0; }
+.journey svg { width: 100%; height: 110px; display: block; }
+.journey svg text { font-family: var(--f-body); font-size: 11px; fill: var(--muted); }
+
+/* sitemap */
+.tree { display: grid; gap: 14px; }
+.tree .root { justify-self: start; }
+.node { display: inline-block; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: .92rem; }
+.node.root { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.branches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.branch { border-top: 2px solid var(--accent); padding-top: 12px; display: grid; gap: 8px; align-content: start; }
+.branch .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.branch ul { list-style: none; padding: 0; display: grid; gap: 6px; }
+.branch li { font-size: .86rem; color: var(--muted); padding-left: 14px; position: relative; }
+.branch li::before { content: ""; position: absolute; left: 0; top: .7em; width: 8px; border-top: 1px solid var(--wf); }
+.branch li b { color: var(--ink); font-weight: 600; }
+
+/* flows */
+.flow { display: grid; gap: 12px; }
+.flow-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+.flow-head .mono { font-size: .78rem; color: var(--muted); }
+.steps { display: flex; align-items: stretch; gap: 0; min-width: 760px; }
+.step { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: .84rem; display: grid; gap: 3px; align-content: start; }
+.step b { font-size: .88rem; }
+.step small { color: var(--muted); }
+.step.sys { background: var(--info-soft); border-color: transparent; }
+.step.sys b { color: var(--info); }
+.step.dec { background: var(--warn-soft); border-color: transparent; }
+.step.dec b { color: var(--warn); }
+.step.end { background: var(--accent-soft); border-color: transparent; }
+.step.end b { color: var(--accent); }
+.arrow { flex: 0 0 22px; display: grid; place-items: center; color: var(--wf); }
+.key { display: flex; gap: 14px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); }
+.key span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+/* wireframes */
+.wfs { display: flex; gap: 28px; align-items: flex-start; min-width: max-content; padding-bottom: 6px; }
+.wfcap { display: grid; gap: 10px; width: 236px; }
+.wfcap.wide { width: 560px; }
+.wfcap p { font-size: .84rem; color: var(--muted); }
+.phone { border: 2px solid var(--wf); border-radius: 26px; padding: 14px 12px 18px; background: var(--surface); display: grid; gap: 8px; height: 470px; align-content: start; overflow: hidden; }
+.screen { border: 2px solid var(--wf); border-radius: 10px; padding: 12px; background: var(--surface); display: grid; gap: 8px; height: 360px; grid-template-columns: 90px minmax(0, 1fr); align-content: start; }
+.notch { width: 60px; height: 6px; border-radius: 3px; background: var(--wf); justify-self: center; margin-bottom: 4px; }
+.wf-bar { height: 22px; border-radius: 5px; background: var(--wf-fill); border: 1px solid var(--wf); display: flex; align-items: center; padding: 0 8px; font-size: .68rem; color: var(--wf-ink); gap: 6px; }
+.wf-bar.t { background: transparent; border: 0; padding: 0; height: auto; font-family: var(--f-display); font-weight: 700; font-size: .88rem; color: var(--wf-ink); }
+.wf-line { height: 7px; border-radius: 4px; background: var(--wf-fill); border: 1px solid var(--wf); }
+.wf-input { height: 30px; border-radius: 6px; border: 1.5px dashed var(--wf); display: flex; align-items: center; padding: 0 8px; font-size: .68rem; color: var(--wf-ink); }
+.wf-input.tall { height: 64px; align-items: flex-start; padding-top: 6px; }
+.wf-btn { height: 32px; border-radius: 6px; background: var(--wf); color: var(--surface); display: grid; place-items: center; font-size: .72rem; font-weight: 600; }
+.wf-row { display: flex; gap: 6px; }
+.wf-row > * { flex: 1; min-width: 0; }
+.wf-box { border: 1px solid var(--wf); border-radius: 6px; background: var(--wf-fill); min-height: 40px; display: grid; place-items: center; font-size: .66rem; color: var(--wf-ink); text-align: center; padding: 4px; }
+.wf-chip { border: 1px solid var(--wf); border-radius: 999px; font-size: .62rem; padding: 2px 8px; color: var(--wf-ink); white-space: nowrap; }
+.wf-bubble { border: 1px solid var(--wf); border-radius: 10px; padding: 6px 8px; font-size: .66rem; color: var(--wf-ink); max-width: 80%; background: var(--wf-fill); }
+.wf-bubble.me { justify-self: end; background: transparent; border-style: dashed; }
+.wf-tabs { display: flex; justify-content: space-around; border-top: 1px solid var(--wf); padding-top: 8px; margin-top: auto; font-size: .6rem; color: var(--wf-ink); }
+.wf-side { grid-row: span 6; border-right: 1px solid var(--wf); display: grid; gap: 6px; align-content: start; padding-right: 8px; }
+.ann { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--warn); color: var(--surface); font-size: .64rem; font-weight: 700; font-family: var(--f-data); flex: none; }
+.anns { display: grid; gap: 6px; font-size: .82rem; }
+.anns div { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; color: var(--muted); }
+
+/* findings */
+.finds { display: grid; gap: 0; }
+.find { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.find:last-child { border-bottom: 0; }
+.sev { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; justify-self: start; align-self: start; }
+.sev.h { color: var(--bad); background: var(--bad-soft); }
+.sev.m { color: var(--warn); background: var(--warn-soft); }
+.sev.l { color: var(--info); background: var(--info-soft); }
+.find h3 { font-size: 1rem; margin-bottom: 4px; }
+.find p { font-size: .92rem; color: var(--muted); }
+.find code { font-family: var(--f-data); font-size: .82rem; background: var(--sunk); padding: 1px 5px; border-radius: 4px; color: var(--ink); }
+.find .fix { color: var(--ink); margin-top: 6px; }
+
+/* principles & tests */
+.princ { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.princ div { display: grid; gap: 4px; }
+.princ p { font-size: .92rem; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.mono { white-space: nowrap; }
+
+@media (max-width: 960px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .toc .eyebrow, .toc .phase { display: none; }
+  .toc a { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .84rem; }
+  .persona { grid-template-columns: minmax(0, 1fr); }
+  .branches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phases div:nth-child(3) { border-left: 0; }
+  .phases div:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .cols3, .princ { grid-template-columns: minmax(0, 1fr); }
+  .branches { grid-template-columns: minmax(0, 1fr); }
+  .find { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .panel { padding: 16px; }
+  article { gap: 48px; }
+}
+</style>
+
+<div class="page">
+  <nav class="toc" aria-label="Sommaire">
+    <span class="eyebrow">Dossier UX</span>
+    <span class="phase">Comprendre</span>
+    <a href="#persona">Persona</a>
+    <a href="#parcours">Parcours utilisateur</a>
+    <a href="#constats">Constats</a>
+    <span class="phase">Structurer</span>
+    <a href="#architecture">Architecture</a>
+    <a href="#flows">Parcours clés</a>
+    <span class="phase">Esquisser</span>
+    <a href="#wireframes">Wireframes</a>
+    <a href="#principes">Principes UI</a>
+    <span class="phase">Valider</span>
+    <a href="#tests">Tests utilisateurs</a>
+  </nav>
+
+  <article>
+    <header class="hero">
+      <span class="eyebrow">Éco-Locaux · espace commercial</span>
+      <h1>Dossier UX</h1>
+      <p class="lede">Pour qui on conçoit, ce qui coince aujourd'hui dans les automatisations n8n, et comment l'interface y répond. Ce dossier précède et justifie la maquette haute fidélité (fichier <span class="mono">maquette/index.html</span>).</p>
+      <div class="phases">
+        <div><b>Comprendre</b><span>Persona, parcours, constats</span></div>
+        <div><b>Structurer</b><span>Arborescence, parcours clés</span></div>
+        <div><b>Esquisser</b><span>Wireframes, principes</span></div>
+        <div><b>Valider</b><span>Protocole de test</span></div>
+      </div>
+    </header>
+
+    <!-- PERSONA -->
+    <section id="persona">
+      <div class="sec-head"><span class="eyebrow">Comprendre</span><h2>Persona</h2></div>
+      <div class="panel persona">
+        <div class="who">
+          <div class="avatar" aria-hidden="true">SM</div>
+          <div><h3>Sébastien Morel</h3><p style="color:var(--muted);font-size:.9rem">Commercial terrain, Éco-Locaux</p></div>
+          <dl>
+            <dt>Secteur</dt><dd>Paris, rayon 15 km</dd>
+            <dt>Cibles</dt><dd>Boulangeries, pressings</dd>
+            <dt>Rythme</dt><dd>4 RDV de 45 min par matinée</dd>
+            <dt>Appareils</dt><dd>Téléphone sur le terrain, ordinateur le lundi</dd>
+          </dl>
+        </div>
+        <div style="display:grid;gap:22px;min-width:0">
+          <p class="quote">« Entre deux rendez-vous, j'ai trois minutes. Si je dois ouvrir quatre outils pour noter un devis, je le fais le soir et j'oublie la moitié. »</p>
+          <div class="cols3">
+            <div><h3>Objectifs</h3><ul><li>Savoir chaque matin qui appeler</li><li>Transformer les RDV en devis signés</li><li>Garder un fichier propre et conforme</li></ul></div>
+            <div><h3>Frustrations</h3><ul><li>Données éparpillées : Supabase, Agenda, mails</li><li>Ne sait pas si le mail est arrivé</li><li>Saisie du rapport de visite au clavier, debout</li></ul></div>
+            <div><h3>Attentes</h3><ul><li>Une seule entrée, utilisable au pouce</li><li>Parler à l'assistant plutôt que remplir</li><li>Voir ce qui demande une action, tout de suite</li></ul></div>
+          </div>
+          <div class="meter" aria-label="Profil d'usage">
+            <span>Aisance numérique</span><i style="--v:60%"></i>
+            <span>Temps disponible</span><i style="--v:20%"></i>
+            <span>Usage mobile</span><i style="--v:85%"></i>
+            <span>Tolérance à la saisie</span><i style="--v:25%"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARCOURS -->
+    <section id="parcours">
+      <div class="sec-head"><span class="eyebrow">Comprendre</span><h2>Parcours utilisateur, une semaine type</h2></div>
+      <p class="prose" style="color:var(--muted)">Chaque étape correspond à un workflow n8n existant. La courbe montre le ressenti de Sébastien aujourd'hui, sans interface dédiée.</p>
+      <div class="panel scroll">
+        <div class="journey">
+          <div class="rh">Étape</div>
+          <div class="st">Trouver<small>à la demande</small></div>
+          <div class="st">Contacter<small>lundi 08:30</small></div>
+          <div class="st">Planifier<small>lundi → mercredi</small></div>
+          <div class="st">Visiter<small>09:00 – 12:00</small></div>
+          <div class="st">Chiffrer<small>après visite</small></div>
+          <div class="st">Suivre &amp; nettoyer<small>quotidien</small></div>
+
+          <div class="rh">Ce qu'il fait</div>
+          <div>Lance une recherche de commerces dans son secteur</div>
+          <div>Laisse partir le mail « Découvrez nos solutions éco locales »</div>
+          <div>Reçoit des créneaux de 45 min dans Google Agenda</div>
+          <div>Rencontre le gérant, prend des notes</div>
+          <div>Remplit le rapport de visite</div>
+          <div>Demande l'état des devis, enregistre les refus RGPD</div>
+
+          <div class="rh">Point de contact</div>
+          <div class="tp">Google Places → Commerces</div>
+          <div class="tp">Resend → Prospection</div>
+          <div class="tp">Google Agenda</div>
+          <div class="tp">—</div>
+          <div class="tp">Formulaire n8n → IA → Devis</div>
+          <div class="tp">Chatbot, purge RGPD</div>
+
+          <div class="rh">Ressenti</div>
+          <div class="emo">
+            <svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="Ressenti : neutre, positif, négatif au moment de la planification, positif en visite, négatif à la saisie, neutre au suivi">
+              <line x1="0" x2="600" y1="55" y2="55" stroke="var(--line)" stroke-dasharray="4 4"/>
+              <polyline points="50,52 150,30 250,86 350,22 450,92 550,58" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+              <g fill="var(--accent)"><circle cx="50" cy="52" r="4"/><circle cx="150" cy="30" r="4"/><circle cx="350" cy="22" r="4"/><circle cx="550" cy="58" r="4"/></g>
+              <g fill="var(--bad)"><circle cx="250" cy="86" r="5"/><circle cx="450" cy="92" r="5"/></g>
+            </svg>
+          </div>
+
+          <div class="rh">Irritants</div>
+          <div class="pain">Doublons possibles, pas de vue d'ensemble du fichier</div>
+          <div class="pain">Aucun retour : mail distribué ou non ?</div>
+          <div class="pain">Créneaux imposés, rien ne dit lesquels sont confirmés</div>
+          <div class="pain">Pas d'accès rapide à l'historique du commerce</div>
+          <div class="pain">Formulaire au clavier, nom du commerce tapé à la main</div>
+          <div class="pain">Statuts de devis différents entre outils</div>
+
+          <div class="rh">Opportunités</div>
+          <div class="opp">Pastille « nouveau / déjà en base » avant ajout</div>
+          <div class="opp">Suivi des envois, emails invalides signalés</div>
+          <div class="opp">Agenda unique avec RDV confirmé / proposé</div>
+          <div class="opp">Fiche commerce consultable depuis le RDV</div>
+          <div class="opp">Autocomplétion du nom, champs pré-remplis</div>
+          <div class="opp">Mêmes 4 statuts partout, tableau par colonne</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONSTATS -->
+    <section id="constats">
+      <div class="sec-head"><span class="eyebrow">Comprendre</span><h2>Constats dans les workflows actuels</h2></div>
+      <p class="prose" style="color:var(--muted)">Relevés en lisant les fichiers JSON du dépôt. Certains sont à confirmer sur l'instance n8n, mais ils changent ce que l'utilisateur voit.</p>
+      <div class="panel finds">
+        <div class="find"><span class="sev h">Sécurité</span><div><h3>Clé Google Places en clair dans le dépôt</h3><p><code>Eco-locaux Scraping.json</code> contient la clé dans l'en-tête de la requête HTTP.</p><p class="fix">Révoquer la clé et la remplacer par un credential n8n.</p></div></div>
+        <div class="find"><span class="sev h">Incohérence</span><div><h3>Les statuts de devis ne sont pas les mêmes partout</h3><p>Le formulaire propose <code>envoyé · accepté · signé · refusé</code>, le chatbot autorise <code>brouillon · envoyé · accepté · refusé</code>. « Signé » ne peut donc pas être enregistré par l'assistant, alors que le tableau de bord le compte.</p><p class="fix">Une seule liste de 4 statuts, reprise dans la maquette.</p></div></div>
+        <div class="find"><span class="sev m">À vérifier</span><div><h3>Le chiffre d'affaires du tableau de bord peut être partiel</h3><p><code>Summarize</code> découpe la somme par statut, puis <code>Merge</code> combine par position : seule la première ligne (un seul statut) arrive dans <code>ca_total</code>.</p><p class="fix">Sommer sans découpage, ou additionner les groupes avant la mise à jour.</p></div></div>
+        <div class="find"><span class="sev m">À vérifier</span><div><h3>Un commerce à l'email invalide est marqué « prospecté »</h3><p>Dans la campagne du lundi, la branche « email invalide » crée quand même la ligne Prospection puis passe <code>prospecte = true</code>. Le commerce disparaît de la liste à prospecter sans avoir été contacté. Le RDV Agenda n'est créé que si l'email est vide.</p><p class="fix">Dans l'interface : pastille « email invalide » et « email manquant », et le commerce reste à prospecter.</p></div></div>
+        <div class="find"><span class="sev l">Manque</span><div><h3>Pas de statut de distribution des mails</h3><p>Le chatbot le dit lui-même : la fonctionnalité est prévue plus tard.</p><p class="fix">Colonne réservée et message explicite dans le suivi des envois.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+      <div class="sec-head"><span class="eyebrow">Structurer</span><h2>Architecture de l'information</h2></div>
+      <p class="prose" style="color:var(--muted)">Sept entrées, rangées selon le moment de la semaine où Sébastien en a besoin. Les tables Supabase restent invisibles : on parle de commerces, de rendez-vous et de devis.</p>
+      <div class="panel tree">
+        <span class="node root">Espace commercial</span>
+        <div class="branches">
+          <div class="branch"><span class="label">Piloter</span><span class="node">Tableau de bord</span>
+            <ul><li><b>Chiffres clés</b> · commerces, prospectés, CA, RDV</li><li><b>Courbe 8 semaines</b></li><li><b>Pipeline des devis</b></li><li><b>RDV de la semaine</b></li><li><b>État des automatisations</b></li></ul></div>
+          <div class="branch"><span class="label">Prospecter</span><span class="node">Commerces</span>
+            <ul><li><b>Liste filtrable</b> · tous, à prospecter, prospectés</li><li><b>Recherche Google Places</b></li></ul>
+            <span class="node">Prospection &amp; RDV</span>
+            <ul><li><b>Agenda de la semaine</b></li><li><b>Suivi des envois</b></li><li><b>Lancer la campagne</b></li></ul></div>
+          <div class="branch"><span class="label">Vendre</span><span class="node">Rapport de visite</span>
+            <ul><li><b>Formulaire 5 champs</b></li></ul>
+            <span class="node">Devis</span>
+            <ul><li><b>Colonnes par statut</b></li><li><b>Changement de statut</b></li></ul></div>
+          <div class="branch"><span class="label">Transverse</span><span class="node">Assistant</span>
+            <ul><li><b>Questions</b> · à prospecter, état d'un devis</li><li><b>Actions</b> · RDV, statut, note, RGPD</li></ul>
+            <span class="node">RGPD</span>
+            <ul><li><b>Demandes en cours</b></li><li><b>Purge</b> avec confirmation</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLOWS -->
+    <section id="flows">
+      <div class="sec-head"><span class="eyebrow">Structurer</span><h2>Parcours clés</h2></div>
+      <div class="key"><span style="--c:var(--surface);outline:1px solid var(--line)">Action utilisateur</span><span style="--c:var(--info-soft)">Système / n8n</span><span style="--c:var(--warn-soft)">Décision</span><span style="--c:var(--accent-soft)">Résultat</span></div>
+
+      <div class="flow">
+        <div class="flow-head"><h3>1 · Du rendez-vous au devis</h3><span class="mono">cible : moins de 90 secondes, au téléphone</span></div>
+        <div class="scroll"><div class="steps">
+          <div class="step"><b>Ouvre « Rapport de visite »</b><small>depuis l'onglet ou le RDV</small></div><div class="arrow">→</div>
+          <div class="step"><b>Choisit le commerce</b><small>autocomplétion, date du jour pré-remplie</small></div><div class="arrow">→</div>
+          <div class="step"><b>Statut + montant</b><small>liste de 4 statuts, clavier numérique</small></div><div class="arrow">→</div>
+          <div class="step dec"><b>Champs valides ?</b><small>non : message sous le champ</small></div><div class="arrow">→</div>
+          <div class="step sys"><b>IA résume le commentaire</b><small>Agent + création de la ligne Devis</small></div><div class="arrow">→</div>
+          <div class="step end"><b>Devis visible</b><small>dans sa colonne, avec confirmation</small></div>
+        </div></div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-head"><h3>2 · Confirmer un RDV en parlant à l'assistant</h3><span class="mono">cible : 1 message</span></div>
+        <div class="scroll"><div class="steps">
+          <div class="step"><b>« RDV confirmé pour Pressing Lamarck »</b><small>message ou suggestion</small></div><div class="arrow">→</div>
+          <div class="step sys"><b>Cherche l'id du commerce</b><small>lecture Commerces par nom</small></div><div class="arrow">→</div>
+          <div class="step dec"><b>Commerce trouvé et contacté ?</b><small>non : l'assistant le dit et propose</small></div><div class="arrow">→</div>
+          <div class="step sys"><b>Met à jour Prospection</b><small>RDV confirmé = true</small></div><div class="arrow">→</div>
+          <div class="step end"><b>Réponse + trace de l'action</b><small>créneau rappelé, agenda en vert</small></div>
+        </div></div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-head"><h3>3 · Une demande de suppression RGPD</h3><span class="mono">action irréversible : deux temps</span></div>
+        <div class="scroll"><div class="steps">
+          <div class="step"><b>« Ne veut plus être recontacté »</b><small>dit à l'assistant après l'appel</small></div><div class="arrow">→</div>
+          <div class="step sys"><b>Date de suppression = aujourd'hui</b><small>Commerces et Prospection</small></div><div class="arrow">→</div>
+          <div class="step"><b>Voit la fiche « à purger »</b><small>écran RGPD</small></div><div class="arrow">→</div>
+          <div class="step dec"><b>Confirme la purge ?</b><small>second clic sur le même bouton, 4 s</small></div><div class="arrow">→</div>
+          <div class="step end"><b>Fiches supprimées</b><small>nombre annoncé</small></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- WIREFRAMES -->
+    <section id="wireframes">
+      <div class="sec-head"><span class="eyebrow">Esquisser</span><h2>Wireframes basse fidélité</h2></div>
+      <p class="prose" style="color:var(--muted)">Mobile d'abord pour les écrans utilisés sur le terrain, ordinateur pour le pilotage du lundi. Les pastilles numérotées renvoient aux annotations.</p>
+      <div class="panel scroll">
+        <div class="wfs">
+          <div class="wfcap">
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="wf-bar t">Rapport de visite <span class="ann">1</span></div>
+              <div class="wf-line" style="width:70%"></div>
+              <div class="wf-input">Nom du commerce ▾ <span class="ann" style="margin-left:auto">2</span></div>
+              <div class="wf-row"><div class="wf-input">15/10/2026</div><div class="wf-input">Statut ▾</div></div>
+              <div class="wf-input">Montant € <span class="ann" style="margin-left:auto">3</span></div>
+              <div class="wf-input tall">Commentaire…</div>
+              <div class="wf-btn">Envoyer le rapport</div>
+              <div class="wf-tabs"><span>Accueil</span><span>RDV</span><span>Rapport</span><span>Assistant</span></div>
+            </div>
+            <h3>Rapport de visite</h3>
+            <div class="anns">
+              <div><span class="ann">1</span>Un seul écran, sans défilement sur un téléphone courant.</div>
+              <div><span class="ann">2</span>Liste des commerces du jour en premier.</div>
+              <div><span class="ann">3</span>Clavier numérique, montant HT.</div>
+            </div>
+          </div>
+
+          <div class="wfcap">
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="wf-bar t">Assistant</div>
+              <div class="wf-bubble me">État des devis cette semaine ?</div>
+              <div class="wf-bubble">5 devis : 1 signé, 1 accepté, 2 envoyés, 1 refusé</div>
+              <div class="wf-bubble me">RDV confirmé pour Pressing Lamarck</div>
+              <div class="wf-bubble">Noté : jeudi 09:45 <span class="ann">4</span></div>
+              <div class="wf-row" style="flex-wrap:wrap"><span class="wf-chip">À prospecter ?</span><span class="wf-chip">Devis signé</span><span class="ann">5</span></div>
+              <div class="wf-row"><div class="wf-input">Message…</div><div class="wf-btn" style="flex:0 0 56px">➤</div></div>
+              <div class="wf-tabs"><span>Accueil</span><span>RDV</span><span>Rapport</span><span>Assistant</span></div>
+            </div>
+            <h3>Assistant</h3>
+            <div class="anns">
+              <div><span class="ann">4</span>Chaque action affiche la table modifiée.</div>
+              <div><span class="ann">5</span>Suggestions pour les demandes fréquentes.</div>
+            </div>
+          </div>
+
+          <div class="wfcap">
+            <div class="phone">
+              <div class="notch"></div>
+              <div class="wf-bar t">Jeudi 15 oct.</div>
+              <div class="wf-row"><span class="wf-chip">Lun</span><span class="wf-chip">Mar</span><span class="wf-chip">Mer</span><span class="wf-chip" style="border-width:2px">Jeu</span><span class="wf-chip">Ven</span></div>
+              <div class="wf-box" style="min-height:52px">09:00 · Commerce A<br>confirmé <span class="ann">6</span></div>
+              <div class="wf-box" style="min-height:52px;background:transparent;border-style:dashed">09:45 · Commerce B<br>à confirmer</div>
+              <div class="wf-box" style="min-height:52px">10:30 · Commerce C</div>
+              <div class="wf-box" style="min-height:52px;background:transparent;border-style:dashed">11:15 · Commerce D</div>
+              <div class="wf-btn">Appeler · Rapport <span class="ann" style="margin-left:6px">7</span></div>
+              <div class="wf-tabs"><span>Accueil</span><span>RDV</span><span>Rapport</span><span>Assistant</span></div>
+            </div>
+            <h3>RDV du jour</h3>
+            <div class="anns">
+              <div><span class="ann">6</span>Plein = confirmé, pointillé = proposé.</div>
+              <div><span class="ann">7</span>Actions directes depuis le créneau.</div>
+            </div>
+          </div>
+
+          <div class="wfcap wide">
+            <div class="screen">
+              <div class="wf-side"><div class="wf-bar t">Éco-Locaux</div><div class="wf-line"></div><div class="wf-line"></div><div class="wf-line"></div><div class="wf-line"></div><div class="wf-line"></div><div class="wf-line"></div></div>
+              <div class="wf-bar t">Bonjour Sébastien <span class="ann">8</span></div>
+              <div class="wf-row"><div class="wf-box">Commerces</div><div class="wf-box">Prospectés</div><div class="wf-box">CA</div><div class="wf-box">RDV</div></div>
+              <div class="wf-row"><div class="wf-box" style="flex:1.6;min-height:110px">Courbe CA + prospectés</div><div class="wf-box" style="min-height:110px">Pipeline devis <span class="ann">9</span></div></div>
+              <div class="wf-row"><div class="wf-box" style="flex:1.6;min-height:84px">RDV de la semaine</div><div class="wf-box" style="min-height:84px">Automatisations</div></div>
+            </div>
+            <h3>Tableau de bord (ordinateur)</h3>
+            <div class="anns">
+              <div><span class="ann">8</span>Résumé d'abord : quatre chiffres clés, puis le détail.</div>
+              <div><span class="ann">9</span>Statut codé par couleur et par libellé, jamais par la couleur seule.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRINCIPES -->
+    <section id="principes">
+      <div class="sec-head"><span class="eyebrow">Esquisser</span><h2>Principes appliqués à l'interface</h2></div>
+      <div class="panel princ">
+        <div><h3>Le vocabulaire du métier</h3><p>« Commerce », « RDV », « devis », jamais « table », « row » ou « webhook ».</p></div>
+        <div><h3>L'état se voit sans lire</h3><p>Pastilles cohérentes : vert signé/confirmé, ambre accepté/à vérifier, bleu envoyé, rouge refusé/à purger.</p></div>
+        <div><h3>Pré-remplir plutôt que demander</h3><p>Date du jour, nom en autocomplétion, requête Google Places et rayon par défaut.</p></div>
+        <div><h3>Retour après chaque action</h3><p>Message bref qui dit ce qui a changé : « Devis Pressing Lamarck enregistré (accepté, 1 840 €) ».</p></div>
+        <div><h3>Irréversible = deux temps</h3><p>La purge RGPD demande un second clic sur le même bouton, sans fenêtre modale.</p></div>
+        <div><h3>Accessible</h3><p>Contrastes vérifiés en clair et en sombre, focus visible, cibles tactiles de 32 px minimum, mouvements réduits respectés.</p></div>
+      </div>
+    </section>
+
+    <!-- TESTS -->
+    <section id="tests">
+      <div class="sec-head"><span class="eyebrow">Valider</span><h2>Protocole de test utilisateur</h2></div>
+      <p class="prose" style="color:var(--muted)">Cinq séances de 30 minutes avec la maquette interactive, sur téléphone puis sur ordinateur. Penser à voix haute, sans aide.</p>
+      <div class="panel scroll">
+        <table>
+          <tr><th>Tâche</th><th>Consigne donnée</th><th>Réussite si</th><th>Mesure</th></tr>
+          <tr><td>T1</td><td>« Tu sors de chez Pressing Lamarck, devis accepté à 1 840 €. Enregistre-le. »</td><td>Devis visible dans « accepté »</td><td class="mono">&lt; 90 s</td></tr>
+          <tr><td>T2</td><td>« Qui dois-tu encore contacter ? »</td><td>Liste trouvée via Commerces ou l'assistant</td><td class="mono">&lt; 30 s</td></tr>
+          <tr><td>T3</td><td>« Confirme ton RDV avec Pressing des Batignolles. »</td><td>Créneau passe au vert</td><td class="mono">1 action</td></tr>
+          <tr><td>T4</td><td>« Combien as-tu signé cette semaine ? »</td><td>Réponse exacte depuis le tableau de bord</td><td class="mono">&lt; 15 s</td></tr>
+          <tr><td>T5</td><td>« Éco Pressing Jourdain ne veut plus être recontacté. »</td><td>Demande enregistrée puis purge confirmée</td><td class="mono">0 erreur</td></tr>
+        </table>
+      </div>
+      <p class="prose" style="color:var(--muted);font-size:.92rem">Après les séances : score SUS (cible ≥ 75), et liste des blocages classés par fréquence pour la prochaine itération de la maquette.</p>
+    </section>
+  </article>
+</div>
